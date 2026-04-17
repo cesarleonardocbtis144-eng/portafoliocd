@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tim Berners-Lee · Cultura Digital 2</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --navy:    #07111f;
+      --navy-2:  #0b1a30;
+      --navy-3:  #0f2347;
+      --gold:    #c9a84c;
+      --gold-lt: #e8c97a;
+      --white:   #f5f8ff;
+      --w60:     rgba(245,248,255,0.6);
+      --w35:     rgba(245,248,255,0.35);
+      --w10:     rgba(245,248,255,0.08);
+    }
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    html { scroll-behavior:smooth; }
+    body {
+      font-family:'DM Sans', sans-serif;
+      background:var(--navy);
+      color:var(--white);
+      overflow-x:hidden;
+    }
+
+    /* ── CANVAS ── */
+    #particles {
+      position:fixed; inset:0;
+      z-index:0; pointer-events:none;
+    }
+
+    /* ══════════════════════════════
+       BACK BUTTON
+    ══════════════════════════════ */
+    .back-btn {
+      position:fixed; top:24px; left:24px;
+      z-index:100;
+      display:inline-flex; align-items:center; gap:9px;
+      font-size:11px; font-weight:500; letter-spacing:2px;
+      text-transform:uppercase; text-decoration:none;
+      color:var(--white);
+      background:rgba(7,17,31,0.7);
+      backdrop-filter:blur(12px);
+      border:1px solid rgba(201,168,76,0.22);
+      border-radius:10px; padding:10px 18px;
+      transition:border-color .28s, box-shadow .28s, transform .28s;
+      animation:slideDown .6s cubic-bezier(.22,1,.36,1) both;
+    }
+    .back-btn:hover {
+      border-color:rgba(201,168,76,0.5);
+      box-shadow:0 6px 24px rgba(0,0,0,0.4), 0 0 16px rgba(201,168,76,0.1);
+      transform:translateX(-3px);
+    }
+    .back-btn svg { transition:transform .25s; }
+    .back-btn:hover svg { transform:translateX(-4px); }
+    @keyframes slideDown {
+      from { opacity:0; transform:translateY(-16px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    /* ══════════════════════════════
+       HERO — editorial layout
+       Different from main: horizontal
+       split, big TYPE on left,
+       visual element on right
+    ══════════════════════════════ */
+    .hero {
+      position:relative;
+      min-height:100vh;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      overflow:hidden;
+      isolation:isolate;
+    }
+
+    /* Right panel — deep navy with web node graphic */
+    .hero-visual {
+      position:relative;
+      background:linear-gradient(135deg, #060d1a 0%, #0b1d38 60%, #0f2347 100%);
+      display:flex; align-items:center; justify-content:center;
+      overflow:hidden;
+    }
+
+    /* Animated web/node SVG */
+    .web-canvas {
+      position:absolute; inset:0;
+      width:100%; height:100%;
+    }
+
+    /* Gold scan line */
+    .scan {
+      position:absolute; left:0; right:0;
+      height:1px;
+      background:linear-gradient(90deg, transparent 0%, rgba(201,168,76,0.5) 50%, transparent 100%);
+      animation:scanMove 6s ease-in-out infinite;
+      pointer-events:none;
+    }
+    @keyframes scanMove {
+      0%   { top:10%; opacity:0; }
+      10%  { opacity:1; }
+      90%  { opacity:1; }
+      100% { top:90%; opacity:0; }
+    }
+
+    /* Big year watermark */
+    .hero-year {
+      position:absolute;
+      bottom:24px; right:24px;
+      font-family:'Cormorant Garamond', serif;
+      font-size:7rem; font-weight:600; line-height:1;
+      color:rgba(201,168,76,0.07);
+      letter-spacing:-4px;
+      pointer-events:none; user-select:none;
+    }
+
+    /* Left panel — text content */
+    .hero-text {
+      position:relative; z-index:5;
+      display:flex; flex-direction:column;
+      justify-content:center;
+      padding:120px 56px 80px 72px;
+      background:linear-gradient(135deg, var(--navy) 0%, #0a1628 100%);
+    }
+
+    /* Dot grid on left panel */
+    .hero-text::before {
+      content:''; position:absolute; inset:0;
+      background-image:radial-gradient(rgba(201,168,76,0.1) 1px, transparent 1px);
+      background-size:32px 32px;
+      pointer-events:none;
+    }
+
+    /* Vertical gold bar */
+    .hero-text::after {
+      content:''; position:absolute;
+      top:0; right:0;
+      width:1px; height:100%;
+      background:linear-gradient(to bottom, transparent, rgba(201,168,76,0.3) 30%, rgba(201,168,76,0.3) 70%, transparent);
+    }
+
+    .hero-tag {
+      display:inline-flex; align-items:center; gap:10px;
+      font-size:9.5px; letter-spacing:4.5px; text-transform:uppercase;
+      color:var(--gold); margin-bottom:28px;
+      animation:fadeRight .8s .2s cubic-bezier(.22,1,.36,1) both;
+    }
+    .hero-tag::before {
+      content:''; width:28px; height:1px;
+      background:var(--gold);
+    }
+
+    .hero-name {
+      font-family:'Cormorant Garamond', serif;
+      font-size:clamp(3rem, 5.5vw, 5rem);
+      font-weight:300; line-height:1.0;
+      letter-spacing:-1px;
+      color:var(--white);
+      margin-bottom:8px;
+      animation:fadeRight .8s .32s cubic-bezier(.22,1,.36,1) both;
+    }
+    .hero-name em {
+      font-style:italic; color:var(--gold-lt);
+      text-shadow:0 0 40px rgba(232,201,122,0.3);
+    }
+
+    .hero-role {
+      font-family:'Cormorant Garamond', serif;
+      font-size:clamp(1rem, 2vw, 1.4rem);
+      font-weight:300; font-style:italic;
+      color:var(--w60); margin-bottom:32px;
+      animation:fadeRight .8s .42s cubic-bezier(.22,1,.36,1) both;
+    }
+
+    .hero-divider {
+      display:flex; align-items:center; gap:12px;
+      margin-bottom:32px;
+      animation:fadeRight .8s .52s cubic-bezier(.22,1,.36,1) both;
+    }
+    .hdiv-line { width:48px; height:1px; background:var(--gold); }
+    .hdiv-diamond {
+      width:6px; height:6px; background:var(--gold-lt);
+      transform:rotate(45deg);
+      box-shadow:0 0 8px rgba(232,201,122,0.6);
+    }
+
+    .hero-intro {
+      font-size:15px; font-weight:300; line-height:1.75;
+      color:var(--w60); max-width:420px;
+      animation:fadeRight .8s .62s cubic-bezier(.22,1,.36,1) both;
+    }
+
+    /* Stat pills */
+    .hero-stats {
+      display:flex; gap:16px; flex-wrap:wrap;
+      margin-top:40px;
+      animation:fadeRight .8s .72s cubic-bezier(.22,1,.36,1) both;
+    }
+    .stat {
+      display:flex; flex-direction:column; gap:3px;
+      padding:14px 20px;
+      background:rgba(245,248,255,0.04);
+      border:1px solid rgba(201,168,76,0.15);
+      border-radius:12px;
+      min-width:90px;
+    }
+    .stat-val {
+      font-family:'Cormorant Garamond', serif;
+      font-size:1.6rem; font-weight:600;
+      color:var(--gold-lt); line-height:1;
+    }
+    .stat-lbl {
+      font-size:9px; letter-spacing:2.5px;
+      text-transform:uppercase; color:var(--w35);
+    }
+
+    @keyframes fadeRight {
+      from { opacity:0; transform:translateX(-24px); }
+      to   { opacity:1; transform:translateX(0); }
+    }
+
+    /* Scroll cue */
+    .scroll-cue {
+      position:absolute; bottom:32px; left:72px;
+      z-index:10; display:flex; align-items:center; gap:10px;
+      opacity:0.35; animation:bob 2.4s ease-in-out infinite;
+      font-size:9px; letter-spacing:3px; text-transform:uppercase;
+    }
+    .scroll-cue-line {
+      width:32px; height:1px; background:var(--white);
+    }
+    @keyframes bob {
+      0%,100% { transform:translateY(0); }
+      50%      { transform:translateY(6px); }
+    }
+
+    /* ══════════════════════════════
+       ARTICLE BODY
+    ══════════════════════════════ */
+    .article {
+      position:relative; z-index:5;
+      max-width:860px; margin:0 auto;
+      padding:90px 32px 110px;
+    }
+
+    /* Section block */
+    .sec {
+      margin-bottom:64px;
+      animation:fadeUp .7s ease both;
+    }
+    .sec:nth-child(1){ animation-delay:.05s }
+    .sec:nth-child(2){ animation-delay:.12s }
+    .sec:nth-child(3){ animation-delay:.19s }
+    .sec:nth-child(4){ animation-delay:.26s }
+    .sec:nth-child(5){ animation-delay:.33s }
+    @keyframes fadeUp {
+      from{ opacity:0; transform:translateY(20px); }
+      to  { opacity:1; transform:translateY(0); }
+    }
+
+    .sec-eyebrow {
+      font-size:9.5px; letter-spacing:5px; text-transform:uppercase;
+      color:var(--gold); margin-bottom:14px;
+      display:flex; align-items:center; gap:12px;
+    }
+    .sec-eyebrow::after {
+      content:''; flex:1; height:1px;
+      background:linear-gradient(90deg, rgba(201,168,76,0.4), transparent);
+    }
+
+    .sec-title {
+      font-family:'Cormorant Garamond', serif;
+      font-size:clamp(1.7rem, 3vw, 2.4rem);
+      font-weight:400; color:var(--white); margin-bottom:20px;
+      line-height:1.2;
+    }
+    .sec-title em { font-style:italic; color:var(--gold-lt); }
+
+    .sec-body {
+      font-size:15.5px; font-weight:300;
+      line-height:1.85; color:var(--w60);
+    }
+    .sec-body p { margin-bottom:18px; }
+    .sec-body p:last-child { margin-bottom:0; }
+    .sec-body strong { color:var(--white); font-weight:500; }
+    .sec-body em { color:var(--gold-lt); font-style:italic; }
+
+    /* Pull quote */
+    .pullquote {
+      position:relative;
+      margin:52px 0;
+      padding:32px 40px;
+      background:linear-gradient(135deg, rgba(15,35,71,0.5), rgba(7,17,31,0.7));
+      border-left:3px solid var(--gold);
+      border-radius:0 16px 16px 0;
+    }
+    .pullquote::before {
+      content:'\201C';
+      position:absolute; top:-16px; left:28px;
+      font-family:'Cormorant Garamond', serif;
+      font-size:6rem; color:var(--gold); opacity:0.35;
+      line-height:1;
+    }
+    .pullquote p {
+      font-family:'Cormorant Garamond', serif;
+      font-size:clamp(1.2rem, 2.5vw, 1.65rem);
+      font-style:italic; font-weight:300;
+      color:var(--white); line-height:1.5;
+      margin-bottom:12px;
+    }
+    .pullquote cite {
+      font-size:11px; letter-spacing:2.5px;
+      text-transform:uppercase; color:var(--gold);
+      font-style:normal;
+    }
+
+    /* Timeline */
+    .timeline {
+      position:relative;
+      padding-left:32px;
+      margin-top:8px;
+    }
+    .timeline::before {
+      content:''; position:absolute;
+      left:6px; top:8px; bottom:8px; width:1px;
+      background:linear-gradient(to bottom, var(--gold), rgba(201,168,76,0.1));
+    }
+    .tl-item {
+      position:relative;
+      margin-bottom:36px;
+    }
+    .tl-item::before {
+      content:''; position:absolute;
+      left:-28px; top:6px;
+      width:10px; height:10px; border-radius:50%;
+      background:var(--navy);
+      border:2px solid var(--gold);
+      box-shadow:0 0 10px rgba(201,168,76,0.4);
+    }
+    .tl-year {
+      font-family:'Cormorant Garamond', serif;
+      font-size:1.1rem; font-weight:600;
+      color:var(--gold-lt); margin-bottom:5px;
+    }
+    .tl-event {
+      font-size:15px; font-weight:300;
+      color:var(--w60); line-height:1.65;
+    }
+    .tl-event strong { color:var(--white); font-weight:500; }
+
+    /* Contribution cards */
+    .contrib-grid {
+      display:grid; grid-template-columns:repeat(auto-fill, minmax(240px,1fr));
+      gap:18px; margin-top:8px;
+    }
+    .contrib-card {
+      padding:22px;
+      background:linear-gradient(145deg, rgba(15,35,71,0.6), rgba(7,17,31,0.8));
+      border:1px solid rgba(201,168,76,0.13);
+      border-radius:14px;
+      transition:border-color .3s, transform .3s;
+    }
+    .contrib-card:hover {
+      border-color:rgba(201,168,76,0.35);
+      transform:translateY(-4px);
+    }
+    .contrib-icon {
+      width:40px; height:40px; border-radius:10px;
+      background:rgba(201,168,76,0.08);
+      border:1px solid rgba(201,168,76,0.2);
+      display:flex; align-items:center; justify-content:center;
+      margin-bottom:14px;
+    }
+    .contrib-title {
+      font-family:'Cormorant Garamond', serif;
+      font-size:1.1rem; font-weight:600;
+      color:var(--white); margin-bottom:8px;
+    }
+    .contrib-desc {
+      font-size:13px; font-weight:300;
+      color:var(--w60); line-height:1.6;
+    }
+
+    /* Footer */
+    footer {
+      position:relative; z-index:5;
+      text-align:center; padding:32px 24px;
+      border-top:1px solid rgba(201,168,76,0.1);
+      font-size:11px; letter-spacing:1.5px; color:var(--w35);
+    }
+    footer span { color:var(--gold); }
+
+    /* Responsive */
+    @media(max-width:768px){
+      .hero { grid-template-columns:1fr; }
+      .hero-visual { height:300px; }
+      .hero-text { padding:100px 28px 60px; }
+      .hero-text::after { display:none; }
+      .article { padding:60px 24px 80px; }
+      .back-btn { top:16px; left:16px; }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="particles"></canvas>
+
+<!-- ── BACK BUTTON ── -->
+<a href="index.html" class="back-btn">
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+    <path d="M9 2L4 7L9 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  Volver al portafolio
+</a>
+
+<!-- ══════════════════════════════
+     HERO — editorial split
+══════════════════════════════ -->
+<section class="hero">
+
+  <!-- LEFT: texto -->
+  <div class="hero-text">
+    <p class="hero-tag">Tarea 01 · Unidad 1 · Introducción</p>
+
+    <h1 class="hero-name">Tim<br><em>Berners-Lee</em></h1>
+    <p class="hero-role">El padre de la World Wide Web</p>
+
+    <div class="hero-divider">
+      <div class="hdiv-line"></div>
+      <div class="hdiv-diamond"></div>
+    </div>
+
+    <p class="hero-intro">
+      El científico británico que en 1989 diseñó la arquitectura que conectaría al mundo entero, 
+      y que decidió regalarla a la humanidad sin pedir nada a cambio.
+    </p>
+
+    <div class="hero-stats">
+      <div class="stat">
+        <span class="stat-val">1955</span>
+        <span class="stat-lbl">Nacimiento</span>
+      </div>
+      <div class="stat">
+        <span class="stat-val">1991</span>
+        <span class="stat-lbl">1er sitio web</span>
+      </div>
+      <div class="stat">
+        <span class="stat-val">W3C</span>
+        <span class="stat-lbl">Fundó en 1994</span>
+      </div>
+      <div class="stat">
+        <span class="stat-val">∞</span>
+        <span class="stat-lbl">Impacto</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: visual -->
+  <div class="hero-visual">
+    <div class="scan"></div>
+
+    <!-- Animated web nodes SVG -->
+    <svg class="web-canvas" viewBox="0 0 600 700" preserveAspectRatio="xMidYMid slice" fill="none">
+      <!-- Node connections -->
+      <line x1="300" y1="350" x2="160" y2="200" stroke="rgba(201,168,76,0.2)" stroke-width="1">
+        <animate attributeName="opacity" values="0.15;0.4;0.15" dur="3s" repeatCount="indefinite"/>
+      </line>
+      <line x1="300" y1="350" x2="440" y2="200" stroke="rgba(201,168,76,0.2)" stroke-width="1">
+        <animate attributeName="opacity" values="0.4;0.15;0.4" dur="2.5s" repeatCount="indefinite"/>
+      </line>
+      <line x1="300" y1="350" x2="100" y2="420" stroke="rgba(245,248,255,0.12)" stroke-width="1">
+        <animate attributeName="opacity" values="0.1;0.3;0.1" dur="4s" repeatCount="indefinite"/>
+      </line>
+      <line x1="300" y1="350" x2="500" y2="420" stroke="rgba(245,248,255,0.12)" stroke-width="1">
+        <animate attributeName="opacity" values="0.3;0.1;0.3" dur="3.5s" repeatCount="indefinite"/>
+      </line>
+      <line x1="300" y1="350" x2="200" y2="530" stroke="rgba(201,168,76,0.15)" stroke-width="1">
+        <animate attributeName="opacity" values="0.15;0.35;0.15" dur="4.5s" repeatCount="indefinite"/>
+      </line>
+      <line x1="300" y1="350" x2="400" y2="530" stroke="rgba(201,168,76,0.15)" stroke-width="1">
+        <animate attributeName="opacity" values="0.35;0.15;0.35" dur="3.8s" repeatCount="indefinite"/>
+      </line>
+      <line x1="300" y1="350" x2="300" y2="140" stroke="rgba(232,201,122,0.25)" stroke-width="1">
+        <animate attributeName="opacity" values="0.2;0.5;0.2" dur="2.8s" repeatCount="indefinite"/>
+      </line>
+      <!-- Secondary connections -->
+      <line x1="160" y1="200" x2="440" y2="200" stroke="rgba(201,168,76,0.1)" stroke-width="0.7"/>
+      <line x1="160" y1="200" x2="100" y2="420" stroke="rgba(245,248,255,0.07)" stroke-width="0.7"/>
+      <line x1="440" y1="200" x2="500" y2="420" stroke="rgba(245,248,255,0.07)" stroke-width="0.7"/>
+      <line x1="100" y1="420" x2="200" y2="530" stroke="rgba(201,168,76,0.08)" stroke-width="0.7"/>
+      <line x1="500" y1="420" x2="400" y2="530" stroke="rgba(201,168,76,0.08)" stroke-width="0.7"/>
+
+      <!-- Central node — main -->
+      <circle cx="300" cy="350" r="22" fill="rgba(201,168,76,0.08)" stroke="#c9a84c" stroke-width="1.5">
+        <animate attributeName="r" values="22;26;22" dur="3s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="300" cy="350" r="12" fill="rgba(201,168,76,0.18)"/>
+      <circle cx="300" cy="350" r="6" fill="#e8c97a"/>
+
+      <!-- Pulse rings -->
+      <circle cx="300" cy="350" r="35" fill="none" stroke="rgba(201,168,76,0.12)" stroke-width="1">
+        <animate attributeName="r" values="22;55;22" dur="3s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.4;0;0.4" dur="3s" repeatCount="indefinite"/>
+      </circle>
+
+      <!-- Satellite nodes -->
+      <circle cx="160" cy="200" r="8" fill="rgba(245,248,255,0.1)" stroke="rgba(245,248,255,0.4)" stroke-width="1">
+        <animate attributeName="opacity" values="0.6;1;0.6" dur="2.5s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="160" cy="200" r="3" fill="rgba(245,248,255,0.7)"/>
+
+      <circle cx="440" cy="200" r="8" fill="rgba(201,168,76,0.1)" stroke="rgba(201,168,76,0.5)" stroke-width="1">
+        <animate attributeName="opacity" values="1;0.6;1" dur="3s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="440" cy="200" r="3" fill="#c9a84c"/>
+
+      <circle cx="100" cy="420" r="6" fill="rgba(245,248,255,0.08)" stroke="rgba(245,248,255,0.3)" stroke-width="1"/>
+      <circle cx="100" cy="420" r="2.5" fill="rgba(245,248,255,0.5)"/>
+
+      <circle cx="500" cy="420" r="6" fill="rgba(201,168,76,0.08)" stroke="rgba(201,168,76,0.3)" stroke-width="1"/>
+      <circle cx="500" cy="420" r="2.5" fill="rgba(201,168,76,0.6)"/>
+
+      <circle cx="200" cy="530" r="7" fill="rgba(245,248,255,0.06)" stroke="rgba(245,248,255,0.25)" stroke-width="1"/>
+      <circle cx="200" cy="530" r="2.5" fill="rgba(245,248,255,0.4)"/>
+
+      <circle cx="400" cy="530" r="7" fill="rgba(201,168,76,0.06)" stroke="rgba(201,168,76,0.25)" stroke-width="1"/>
+      <circle cx="400" cy="530" r="2.5" fill="rgba(201,168,76,0.5)"/>
+
+      <circle cx="300" cy="140" r="10" fill="rgba(232,201,122,0.1)" stroke="#e8c97a" stroke-width="1.2">
+        <animate attributeName="opacity" values="0.7;1;0.7" dur="2s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="300" cy="140" r="4" fill="#e8c97a"/>
+
+      <!-- Labels -->
+      <text x="166" y="193" font-size="9" fill="rgba(245,248,255,0.45)" font-family="sans-serif" text-anchor="middle">HTML</text>
+      <text x="446" y="193" font-size="9" fill="rgba(201,168,76,0.6)" font-family="sans-serif" text-anchor="middle">HTTP</text>
+      <text x="300" y="133" font-size="9" fill="rgba(232,201,122,0.7)" font-family="sans-serif" text-anchor="middle">WWW</text>
+      <text x="88" y="440" font-size="8" fill="rgba(245,248,255,0.35)" font-family="sans-serif" text-anchor="middle">URL</text>
+      <text x="516" y="440" font-size="8" fill="rgba(201,168,76,0.45)" font-family="sans-serif" text-anchor="middle">W3C</text>
+      <text x="196" y="550" font-size="8" fill="rgba(245,248,255,0.3)" font-family="sans-serif" text-anchor="middle">CERN</text>
+      <text x="408" y="550" font-size="8" fill="rgba(201,168,76,0.35)" font-family="sans-serif" text-anchor="middle">Solid</text>
+    </svg>
+
+    <div class="hero-year">1989</div>
+  </div>
+
+  <div class="scroll-cue">
+    <div class="scroll-cue-line"></div>
+    Leer más
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+     ARTICLE CONTENT
+══════════════════════════════ -->
+<article class="article">
+
+  <!-- Origen -->
+  <div class="sec">
+    <p class="sec-eyebrow">Biografía · Origen</p>
+    <h2 class="sec-title">Londres, 1955: <em>el comienzo</em></h2>
+    <div class="sec-body">
+      <p>
+        Timothy John Berners-Lee nació el <strong>8 de junio de 1955</strong> en Londres, Inglaterra, 
+        en el seno de una familia profundamente ligada a la computación. Sus padres, 
+        <strong>Conway Berners-Lee</strong> y <strong>Mary Lee Woods</strong>, fueron matemáticos 
+        que participaron en la construcción del primer computador comercial de la historia, 
+        el <em>Ferranti Mark 1</em>. Crecer rodeado de conversaciones sobre máquinas, lógica y posibilidades 
+        marcó para siempre su manera de ver el mundo.
+      </p>
+      <p>
+        Desde pequeño mostró una curiosidad insaciable. Construía circuitos con juguetes eléctricos 
+        y pasaba horas explorando libros de matemáticas. En 1973 ingresó al <strong>Queen's College 
+        de la Universidad de Oxford</strong>, donde estudió Física y se graduó con honores en 1976. 
+        Fue ahí donde comenzó a imaginar sistemas que pudieran conectar ideas de maneras que las 
+        jerarquías tradicionales no permitían.
+      </p>
+    </div>
+  </div>
+
+  <!-- Pullquote 1 -->
+  <div class="pullquote">
+    <p>La web no es una tecnología, es una extensión del pensamiento humano. 
+    Nació del deseo de que cualquier persona pueda acceder a cualquier idea.</p>
+    <cite>— Tim Berners-Lee</cite>
+  </div>
+
+  <!-- La invención -->
+  <div class="sec">
+    <p class="sec-eyebrow">Descubrimiento · 1989</p>
+    <h2 class="sec-title">La propuesta que <em>cambió el mundo</em></h2>
+    <div class="sec-body">
+      <p>
+        En 1989, mientras trabajaba como ingeniero en el <strong>CERN</strong> 
+        (el laboratorio europeo de física de partículas en Ginebra, Suiza), 
+        Berners-Lee detectó un problema recurrente: los investigadores no podían compartir 
+        información fácilmente porque sus computadoras usaban sistemas incompatibles entre sí.
+      </p>
+      <p>
+        Su solución fue radical. Presentó un documento titulado 
+        <em>"Information Management: A Proposal"</em> en el que esbozó un sistema de 
+        documentos interconectados accesibles desde cualquier computadora. Su jefe, 
+        <strong>Mike Sendall</strong>, escribió en la portada: <em>"Vaga, pero emocionante"</em>. 
+        Esa frase resumió perfectamente lo que estaba por ocurrir.
+      </p>
+      <p>
+        En 1991 publicó el <strong>primer sitio web de la historia</strong> en la dirección 
+        <em>info.cern.ch</em>, y ese mismo año tomó la decisión que lo convierte en una figura 
+        histórica única: <strong>no patentó su invención</strong>. La dejó libre, abierta y 
+        accesible para toda la humanidad, sin cobrar un solo centavo.
+      </p>
+    </div>
+  </div>
+
+  <!-- Contribuciones -->
+  <div class="sec">
+    <p class="sec-eyebrow">Aportaciones · Pilares técnicos</p>
+    <h2 class="sec-title">Los tres pilares de <em>la Web</em></h2>
+    <div class="contrib-grid">
+
+      <div class="contrib-card">
+        <div class="contrib-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M4 6l4 6 4-6" stroke="#e8c97a" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M4 18h8M14 6h6M14 12h6M14 18h4" stroke="#e8c97a" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h3 class="contrib-title">HTML</h3>
+        <p class="contrib-desc">HyperText Markup Language. El lenguaje para estructurar y crear páginas web con etiquetas semánticas que definen el contenido.</p>
+      </div>
+
+      <div class="contrib-card">
+        <div class="contrib-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="#e8c97a" stroke-width="1.5" stroke-linejoin="round"/>
+            <path d="M2 17l10 5 10-5" stroke="#e8c97a" stroke-width="1.5" stroke-linejoin="round"/>
+            <path d="M2 12l10 5 10-5" stroke="#e8c97a" stroke-width="1.5" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h3 class="contrib-title">HTTP</h3>
+        <p class="contrib-desc">HyperText Transfer Protocol. El protocolo que permite la transferencia de datos entre servidores y navegadores en toda la red.</p>
+      </div>
+
+      <div class="contrib-card">
+        <div class="contrib-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="9" stroke="#e8c97a" stroke-width="1.5"/>
+            <path d="M2 12h20M12 2c-2.5 3-4 6-4 10s1.5 7 4 10M12 2c2.5 3 4 6 4 10s-1.5 7-4 10" stroke="#e8c97a" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <h3 class="contrib-title">URL</h3>
+        <p class="contrib-desc">Uniform Resource Locator. El sistema de direcciones únicas que identifica y localiza cada recurso disponible en la web global.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <div class="sec">
+    <p class="sec-eyebrow">Cronología · Hitos clave</p>
+    <h2 class="sec-title">Una vida de <em>impacto</em></h2>
+    <div class="timeline">
+
+      <div class="tl-item">
+        <div class="tl-year">1955</div>
+        <div class="tl-event">Nace en Londres. Sus padres trabajan en el <strong>Ferranti Mark 1</strong>, el primer computador comercial.</div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-year">1976</div>
+        <div class="tl-event">Se gradúa en Física del <strong>Queen's College, Oxford</strong>. Inicia su carrera en ingeniería de software.</div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-year">1989</div>
+        <div class="tl-event">Mientras trabaja en el <strong>CERN</strong>, presenta su propuesta <em>"Information Management: A Proposal"</em>, germen de la Web.</div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-year">1991</div>
+        <div class="tl-event">Publica el <strong>primer sitio web</strong> en info.cern.ch. Toma la histórica decisión de no patentar la World Wide Web.</div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-year">1994</div>
+        <div class="tl-event">Funda el <strong>World Wide Web Consortium (W3C)</strong> en el MIT, organización que establece los estándares internacionales de la web.</div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-year">2016</div>
+        <div class="tl-event">Recibe el <strong>Premio Turing</strong>, considerado el Nobel de la computación, por la invención de la World Wide Web.</div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-year">2019</div>
+        <div class="tl-event">Lanza el proyecto <strong>Solid</strong>, una plataforma para devolver a los usuarios el control de sus datos personales en la web.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Pullquote 2 -->
+  <div class="pullquote">
+    <p>Si yo hubiera patentado la web, hoy no existiría. Fue la decisión más importante de mi vida.</p>
+    <cite>— Tim Berners-Lee, entrevista 2014</cite>
+  </div>
+
+  <!-- Legado -->
+  <div class="sec">
+    <p class="sec-eyebrow">Reflexión · Legado</p>
+    <h2 class="sec-title">Lo que nos dejó <em>para siempre</em></h2>
+    <div class="sec-body">
+      <p>
+        Tim Berners-Lee no inventó internet (esa infraestructura ya existía). Inventó algo más profundo: 
+        la capa de significado que convirtió una red de computadoras en un <strong>espacio de conocimiento compartido</strong>. 
+        La Web democratizó el acceso a la información de una manera que ninguna tecnología antes había logrado.
+      </p>
+      <p>
+        Su legado más poderoso, sin embargo, no es técnico sino filosófico. En un mundo donde cada 
+        innovación digital se convierte en un activo privado, Berners-Lee eligió el camino opuesto: 
+        <strong>abrir su invención para todos</strong>. Esa decisión no tiene precio, y es la razón 
+        por la que hoy cualquier persona, en cualquier rincón del planeta, puede acceder a cualquier idea.
+      </p>
+      <p>
+        Hoy, con la web bajo amenaza de la vigilancia masiva, la desinformación y la concentración de poder 
+        en pocas plataformas, Berners-Lee sigue luchando. Su proyecto <em>Solid</em> y su campaña por 
+        una <strong>Carta de los Derechos en Internet</strong> son su respuesta: la web fue diseñada 
+        para ser libre, y él no va a dejar de defenderla.
+      </p>
+    </div>
+  </div>
+
+</article>
+
+<footer>
+  <p>Tarea 01 · <span>Cultura Digital 2</span> · 2° Semestre de IA · 2025–2026</p>
+</footer>
+
+<!-- PARTICLES -->
+<script>
+(function(){
+  const canvas = document.getElementById('particles');
+  const ctx    = canvas.getContext('2d');
+  const PAL = [[201,168,76],[232,201,122],[245,248,255]];
+  let W, H, pts = [];
+  const N = 55;
+  function resize(){ W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight; }
+  resize();
+  window.addEventListener('resize',()=>{resize();build();});
+  function r(a,b){return a+Math.random()*(b-a);}
+  function mkPt(){
+    const ci=Math.random();
+    const col=ci<0.55?PAL[0]:ci<0.78?PAL[1]:PAL[2];
+    return{x:r(0,W),y:r(0,H),vx:r(-0.28,0.28),vy:r(-0.28,0.28),
+      rad:r(0.5,2.2),col,alpha:r(0.18,0.55),
+      bp:r(0,Math.PI*2),bs:r(0.006,0.014),
+      pulse:Math.random()<0.18,pr:0,prMax:r(12,24),prSpd:r(0.22,0.44)};
+  }
+  function build(){pts=[];for(let i=0;i<N;i++)pts.push(mkPt());}
+  build();
+  let mx=-9999,my=-9999;
+  window.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;});
+  let t=0;
+  function loop(){
+    requestAnimationFrame(loop); ctx.clearRect(0,0,W,H); t++;
+    for(let i=0;i<pts.length;i++){
+      const p=pts[i];
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.x<-10)p.x=W+10; if(p.x>W+10)p.x=-10;
+      if(p.y<-10)p.y=H+10; if(p.y>H+10)p.y=-10;
+      const dx=p.x-mx,dy=p.y-my,d=Math.sqrt(dx*dx+dy*dy);
+      if(d<120){const f=(120-d)/120*0.012;p.vx+=dx/d*f;p.vy+=dy/d*f;}
+      const sp=Math.sqrt(p.vx*p.vx+p.vy*p.vy);
+      if(sp>0.7){p.vx*=0.7/sp;p.vy*=0.7/sp;}
+      const a=p.alpha+Math.sin(p.bp+t*p.bs)*0.11;
+      for(let j=i+1;j<pts.length;j++){
+        const q=pts[j];
+        const ex=p.x-q.x,ey=p.y-q.y,ed=Math.sqrt(ex*ex+ey*ey);
+        if(ed<95){
+          const la=(1-ed/95)*0.15;
+          const[r2,g,b]=p.col;
+          ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);
+          ctx.strokeStyle=`rgba(${r2},${g},${b},${la})`;ctx.lineWidth=0.5;ctx.stroke();
+        }
+      }
+      if(p.pulse){
+        p.pr+=p.prSpd;if(p.pr>p.prMax)p.pr=0;
+        const pa=(1-p.pr/p.prMax)*0.22;
+        const[r2,g,b]=p.col;
+        ctx.beginPath();ctx.arc(p.x,p.y,p.pr,0,Math.PI*2);
+        ctx.strokeStyle=`rgba(${r2},${g},${b},${pa})`;ctx.lineWidth=0.8;ctx.stroke();
+      }
+      const[r2,g,b]=p.col;
+      const halo=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.rad*5);
+      halo.addColorStop(0,`rgba(${r2},${g},${b},${a*0.35})`);
+      halo.addColorStop(1,`rgba(${r2},${g},${b},0)`);
+      ctx.beginPath();ctx.arc(p.x,p.y,p.rad*5,0,Math.PI*2);ctx.fillStyle=halo;ctx.fill();
+      ctx.beginPath();ctx.arc(p.x,p.y,p.rad,0,Math.PI*2);
+      ctx.fillStyle=`rgba(${r2},${g},${b},${a})`;ctx.fill();
+    }
+  }
+  loop();
+})();
+</script>
+</body>
+</html>
